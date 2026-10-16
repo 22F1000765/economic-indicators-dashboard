@@ -1,6 +1,11 @@
 import os
 from datetime import datetime, timezone
 
+import json
+import time
+from urllib.error import URLError, HTTPError
+from urllib.request import Request, urlopen
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -45,6 +50,135 @@ def health_check():
         "status": "healthy",
         "service": "economic-indicators-dashboard-api",
     }
+
+MARKET_CACHE = {"expires_at": 0, "data": None}
+
+MARKET_INDICES = [
+    {"name": "NIFTY 50", "symbol": "^NSEI"},
+    {"name": "SENSEX", "symbol": "^BSESN"},
+    {"name": "BANK NIFTY", "symbol": "^NSEBANK"},
+]
+
+
+def fetch_market_index(name: str, symbol: str):
+    url = (
+        "https://query1.finance.yahoo.com/v8/finance/chart/"
+        f"{symbol}?range=5d&interval=1d"
+    )
+
+    request = Request(
+        url,
+        headers={"User-Agent": "Mozilla/5.0"},
+    )
+
+    try:
+        with urlopen(request, timeout=5) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+
+        result = payload["chart"]["result"][0]
+        timestamps = result.get("timestamp", [])
+        closes = result["indicators"]["quote"][0]["close"]
+
+        valid_points = [
+            (timestamp, close)
+            for timestamp, close in zip(timestamps, closes)
+            if close is not None
+        ]
+
+        if not valid_points:
+            raise ValueError("No closing prices returned")
+
+        timestamp, latest = valid_points[-1]
+        previous = (
+            valid_points[-2][1]
+            if len(valid_points) >= 2
+            else None
+        )
+
+        change = (
+            round(latest - previous, 2)
+            if previous is not None
+            else None
+        )
+
+        change_percent = (
+            round((latest - previous) / previous * 100, 2)
+            if previous not in (None, 0)
+            else None
+        )
+
+        return {
+            "name": name,
+            "symbol": symbol,
+            "value": round(latest, 2),
+            "change": change,
+            "change_percent": change_percent,
+            "timestamp": datetime.fromtimestamp(
+                timestamp, timezone.utc
+            ).isoformat(),
+            "status": "available",
+            "source": "Yahoo Finance",
+            "source_url": (
+                "https://finance.yahoo.com/quote/"
+                + symbol.replace("^", "%5E")
+            ),
+        }
+
+    except (
+        HTTPError,
+        URLError,
+        TimeoutError,
+        ValueError,
+        KeyError,
+        IndexError,
+        TypeError,
+    ):
+        return {
+            "name": name,
+            "symbol": symbol,
+            "value": None,
+            "change": None,
+            "change_percent": None,
+            "timestamp": None,
+            "status": "unavailable",
+            "source": "Yahoo Finance",
+            "source_url": (
+                "https://finance.yahoo.com/quote/"
+                + symbol.replace("^", "%5E")
+            ),
+        }
+
+
+@app.get("/api/market-watch")
+def get_market_watch():
+    now = time.monotonic()
+
+    if (
+        MARKET_CACHE["data"] is not None
+        and now < MARKET_CACHE["expires_at"]
+    ):
+        return MARKET_CACHE["data"]
+
+    indices = [
+        fetch_market_index(item["name"], item["symbol"])
+        for item in MARKET_INDICES
+    ]
+
+    payload = {
+        "data_status": (
+            "available"
+            if any(item["status"] == "available" for item in indices)
+            else "unavailable"
+        ),
+        "as_of": datetime.now(timezone.utc).isoformat(),
+        "indices": indices,
+    }
+
+    MARKET_CACHE["data"] = payload
+    MARKET_CACHE["expires_at"] = now + 300
+
+    return payload
+
 
 
 @app.get("/api/indicators")
