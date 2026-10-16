@@ -40,21 +40,7 @@ const indicators = [
 ]
 
 
-function MetricPlaceholder() {
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      {['Latest value', 'Previous period'].map((label) => (
-        <div key={label} className="rounded-md bg-[#111f31] p-3">
-          <p className="text-[10px] text-slate-400">{label}</p>
-          <p className="mt-2 text-xl font-semibold text-cyan-300">—</p>
-          <p className="mt-1 text-[10px] text-slate-500">
-            Awaiting verified data
-          </p>
-        </div>
-      ))}
-    </div>
-  )
-}
+
 
 function App() {
     const [apiStatus, setApiStatus] = useState<
