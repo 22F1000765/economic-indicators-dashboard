@@ -1,4 +1,4 @@
-
+import os
 from datetime import datetime, timezone
 
 from fastapi import FastAPI
@@ -18,16 +18,25 @@ app = FastAPI(
 
 # Local development origins. Restrict these to the deployed
 # frontend origin when configuring production.
+
+frontend_origin = os.getenv("FRONTEND_ORIGIN")
+
+allowed_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+if frontend_origin:
+    allowed_origins.append(frontend_origin.rstrip("/"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=False,
     allow_methods=["GET"],
     allow_headers=["Content-Type", "Authorization"],
 )
+
 
 
 @app.get("/health")
