@@ -34,3 +34,29 @@ export async function fetchIndicators(): Promise<IndicatorsResponse> {
   const response = await apiClient.get<IndicatorsResponse>('/api/indicators')
   return response.data
 }
+
+
+export interface MarketIndex {
+  name: string
+  symbol: string
+  value: number | null
+  change: number | null
+  change_percent: number | null
+  timestamp: string | null
+  status: 'available' | 'unavailable'
+  source: string
+  source_url: string
+}
+
+export interface MarketWatchResponse {
+  data_status: string
+  as_of: string
+  indices: MarketIndex[]
+}
+
+export async function fetchMarketWatch(): Promise<MarketWatchResponse> {
+  const response = await apiClient.get<MarketWatchResponse>(
+    '/api/market-watch'
+  )
+  return response.data
+}

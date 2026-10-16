@@ -5,6 +5,11 @@ import IndicatorCard from './components/IndicatorCard'
 import GDPChart from './components/GDPChart'
 import IndicatorChart from './components/IndicatorChart'
 
+import {
+  fetchMarketWatch,
+  
+  type MarketIndex,
+} from './api/client'
 
 const indicators = [
   {
@@ -52,6 +57,10 @@ function App() {
   const [indicatorsData, setIndicatorsData] = useState<
   Awaited<ReturnType<typeof fetchIndicators>> | null
 >(null)
+const [marketIndices, setMarketIndices] = useState<MarketIndex[]>([])
+const [marketWatchStatus, setMarketWatchStatus] = useState<
+  'loading' | 'connected' | 'error'
+>('loading')
 
 
   useEffect(() => {
@@ -72,6 +81,29 @@ function App() {
 
     loadIndicators()
   }, [])
+  useEffect(() => {
+  let cancelled = false
+
+  fetchMarketWatch()
+    .then((data) => {
+      if (cancelled) return
+
+      setMarketIndices(data.indices)
+      setMarketWatchStatus(
+        data.data_status === 'available' ? 'connected' : 'error'
+      )
+    })
+    .catch(() => {
+      if (cancelled) return
+
+      setMarketIndices([])
+      setMarketWatchStatus('error')
+    })
+
+  return () => {
+    cancelled = true
+  }
+}, [])
   return (
     <main className="mx-auto min-h-screen w-full max-w-[1214px] bg-[#050a12] p-4 text-slate-100">
       <header className="mb-4">
@@ -84,6 +116,17 @@ function App() {
         <p className="mt-1 text-xs text-slate-400">
           India · Macroeconomic Overview
         </p>
+        <p
+  className={`mt-1 text-[10px] ${
+    apiStatus === 'connected'
+      ? 'text-emerald-400'
+      : apiStatus === 'error'
+        ? 'text-red-400'
+        : 'text-slate-500'
+  }`}
+>
+  {apiMessage}
+</p>
       </header>
 
       <section className="mb-4 rounded-md border border-slate-700 bg-[#0b1422] p-3">
@@ -93,25 +136,70 @@ function App() {
           </span>
           <span
   className={`text-[10px] ${
-    apiStatus === 'connected'
+    marketWatchStatus === 'connected'
       ? 'text-emerald-400'
-      : apiStatus === 'error'
+      : marketWatchStatus === 'error'
         ? 'text-red-400'
         : 'text-slate-500'
   }`}
 >
-  {apiMessage}
+  {marketWatchStatus === 'loading'
+  ? 'Loading market data…'
+  : marketWatchStatus === 'connected'
+    ? 'Latest daily data · Yahoo Finance'
+    : 'Market data unavailable'}
 </span>
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          {['NIFTY 50', 'SENSEX', 'BANK NIFTY'].map((name) => (
-            <div key={name} className="rounded bg-[#111f31] p-2">
-              <p className="text-[10px] text-slate-400">{name}</p>
-              <p className="mt-2 text-sm font-semibold">—</p>
-              <p className="text-[10px] text-slate-500">Unavailable</p>
-            </div>
-          ))}
-        </div>
+        
+<div className="mt-3 grid grid-cols-3 gap-2">
+  {['NIFTY 50', 'SENSEX', 'BANK NIFTY'].map((name) => {
+    const index = marketIndices.find((item) => item.name === name)
+    const hasValue = index?.value != null
+    const change = index?.change_percent
+    const changeColor =
+      change == null
+        ? 'text-slate-500'
+        : change > 0
+          ? 'text-emerald-400'
+          : change < 0
+            ? 'text-red-400'
+            : 'text-slate-400'
+
+    return (
+      <div key={name} className="rounded bg-[#111f31] p-2">
+        <p className="text-[10px] text-slate-400">{name}</p>
+
+        <p className="mt-2 text-sm font-semibold text-slate-100">
+          {hasValue
+            ? index.value!.toLocaleString('en-IN', {
+                maximumFractionDigits: 2,
+              })
+            : '—'}
+        </p>
+
+        <p className={`mt-1 text-[10px] ${changeColor}`}>
+          {hasValue && change != null
+            ? `${change > 0 ? '+' : ''}${change.toFixed(2)}%`
+            : marketWatchStatus === 'loading'
+              ? 'Loading…'
+              : 'Unavailable'}
+        </p>
+
+        {index?.timestamp && (
+          <p className="mt-1 text-[9px] text-slate-500">
+            {new Date(index.timestamp).toLocaleDateString('en-IN', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+              timeZone: 'Asia/Kolkata',
+            })}
+          </p>
+        )}
+      </div>
+    )
+  })}
+</div>
+
       </section>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
