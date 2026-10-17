@@ -23,11 +23,29 @@ export interface Indicator {
   data_status: 'illustrative' | 'verified' | 'stale' | 'unavailable'
 }
 
+export interface IndicatorBreakdown {
+  period: string
+  unit: string
+  source: string
+  source_url: string
+  exports?: number
+  imports?: number
+  balance?: number
+  total?: number
+  capital?: number
+}
+
+export interface IndicatorBreakdowns {
+  'trade-balance': IndicatorBreakdown
+  'government-expenditure': IndicatorBreakdown
+}
+
 export interface IndicatorsResponse {
   data_status: string
   message: string
   as_of: string
   indicators: Indicator[]
+  breakdowns?: IndicatorBreakdowns
 }
 
 export async function fetchIndicators(): Promise<IndicatorsResponse> {

@@ -266,9 +266,11 @@ const [marketWatchStatus, setMarketWatchStatus] = useState<
         : ''}
     </p>
     <p className="mt-1 text-[10px] text-slate-500">
-      {indicatorsData?.indicators.find(
-        (item) => item.id === indicator.id
-      )?.data_status ?? 'unavailable'}
+      {indicator.id === 'debt-to-gdp'
+  ? 'Budget estimate · FY 2026–27'
+  : indicatorsData?.indicators.find(
+      (item) => item.id === indicator.id
+    )?.data_status ?? 'unavailable'}
     </p>
   </div>
 )}
@@ -276,6 +278,107 @@ const [marketWatchStatus, setMarketWatchStatus] = useState<
 
 {indicator.id === 'gdp-growth' ? (
   <GDPChart />
+) : indicator.id === 'trade-balance' &&
+  indicatorsData?.breakdowns?.['trade-balance'] ? (
+  <div className="rounded-md bg-[#0b1422] p-3">
+    <p className="mb-3 text-xs text-slate-400">
+      Trade breakdown · {indicatorsData.breakdowns['trade-balance'].period}
+    </p>
+    <div className="grid grid-cols-3 gap-2">
+      <div className="rounded-md bg-[#111f31] p-2">
+        <p className="text-[10px] text-slate-400">Exports</p>
+        <p className="mt-2 text-sm font-semibold text-emerald-300">
+          ${indicatorsData.breakdowns['trade-balance'].exports?.toFixed(2) ?? '—'}B
+        </p>
+      </div>
+      <div className="rounded-md bg-[#111f31] p-2">
+        <p className="text-[10px] text-slate-400">Imports</p>
+        <p className="mt-2 text-sm font-semibold text-cyan-300">
+          ${indicatorsData.breakdowns['trade-balance'].imports?.toFixed(2) ?? '—'}B
+        </p>
+      </div>
+      <div className="rounded-md bg-[#111f31] p-2">
+        <p className="text-[10px] text-slate-400">Balance</p>
+        <p className="mt-2 text-sm font-semibold text-rose-300">
+          ${indicatorsData.breakdowns['trade-balance'].balance?.toFixed(2) ?? '—'}B
+        </p>
+      </div>
+    </div>
+    <p className="mt-2 text-[10px] text-slate-500">
+      Values in US$ billion
+    </p>
+  </div>
+) : indicator.id === 'government-expenditure' &&
+  indicatorsData?.breakdowns?.['government-expenditure'] ? (
+  <div className="rounded-md bg-[#0b1422] p-3">
+    <p className="mb-3 text-xs text-slate-400">
+      Expenditure breakdown · {indicatorsData.breakdowns['government-expenditure'].period}
+    </p>
+    <div className="grid grid-cols-2 gap-2">
+      <div className="rounded-md bg-[#111f31] p-3">
+        <p className="text-[10px] text-slate-400">Total expenditure</p>
+        <p className="mt-2 text-sm font-semibold text-cyan-300">
+          ₹{indicatorsData.breakdowns['government-expenditure'].total?.toLocaleString('en-IN') ?? '—'} Cr
+        </p>
+      </div>
+      <div className="rounded-md bg-[#111f31] p-3">
+        <p className="text-[10px] text-slate-400">Capital expenditure</p>
+        <p className="mt-2 text-sm font-semibold text-emerald-300">
+          ₹{indicatorsData.breakdowns['government-expenditure'].capital?.toLocaleString('en-IN') ?? '—'} Cr
+        </p>
+      </div>
+    </div>
+    <p className="mt-2 text-[10px] text-slate-500">
+      Figures in crore rupees · Provisional
+    </p>
+  </div>
+  
+) : indicator.id === 'inflation' ? (
+  <div className="rounded-md bg-[#0b1422] p-3">
+    <p className="mb-3 text-xs text-slate-400">Inflation context</p>
+    <div className="rounded-md bg-[#111f31] p-3">
+      <p className="text-[10px] text-slate-400">RBI inflation target range</p>
+      <p className="mt-2 text-lg font-semibold text-cyan-300">2% – 6%</p>
+      <p className="mt-1 text-[10px] text-slate-500">
+        CPI target range · midpoint 4%
+      </p>
+    </div>
+    <p className="mt-3 text-xs text-slate-400">
+      Compare the latest CPI inflation reading above with the target range.
+    </p>
+  </div>
+) : indicator.id === 'gst-collection' ? (
+  <div className="rounded-md bg-[#0b1422] p-3">
+    <p className="mb-3 text-xs text-slate-400">GST collection context</p>
+    <div className="rounded-md bg-[#111f31] p-3">
+      <p className="text-[10px] text-slate-400">Reporting period</p>
+      <p className="mt-2 text-lg font-semibold text-cyan-300">
+        September 2026
+      </p>
+      <p className="mt-1 text-[10px] text-slate-500">
+        Monthly GST revenue · provisional figures
+      </p>
+    </div>
+    <p className="mt-3 text-xs text-slate-400">
+      The latest value above is the reported collection for this month.
+    </p>
+  </div>
+) : indicator.id === 'debt-to-gdp' ? (
+  <div className="rounded-md bg-[#0b1422] p-3">
+    <p className="mb-3 text-xs text-slate-400">Debt ratio context</p>
+    <div className="rounded-md border border-amber-900/60 bg-[#111f31] p-3">
+      <p className="text-[10px] text-amber-300">Budget estimate</p>
+      <p className="mt-2 text-lg font-semibold text-cyan-300">
+        FY 2026–27
+      </p>
+      <p className="mt-1 text-[10px] text-slate-400">
+        This is a fiscal-year estimate, not a final actual figure.
+      </p>
+    </div>
+    <p className="mt-3 text-xs text-slate-400">
+      Debt-to-GDP expresses government debt relative to the size of the economy.
+    </p>
+  </div>
 ) : indicatorsData?.indicators.some(
     (item) => item.id === indicator.id && item.value != null
   ) ? (
