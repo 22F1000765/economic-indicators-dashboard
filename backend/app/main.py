@@ -202,6 +202,25 @@ def get_indicators():
                 if observations
                 else "No indicator observations have been collected yet."
             ),
+            "breakdowns": {
+    "trade-balance": {
+        "period": "September 2026",
+        "exports": 80.75,
+        "imports": 94.05,
+        "balance": -13.30,
+        "unit": "US$ billion",
+        "source": "Ministry of Commerce and Industry",
+        "source_url": "https://www.pib.gov.in/PressReleseDetailm.aspx?PRID=2323944&lang=1&reg=3",
+    },
+    "government-expenditure": {
+        "period": "FY 2025–26 (provisional)",
+        "total": 4905151,
+        "capital": 1069119,
+        "unit": "₹ crore",
+        "source": "Controller General of Accounts",
+        "source_url": "https://cga.nic.in/writereaddata/MonthAccount/32026/DATA2526.htm",
+    },
+},
             "as_of": datetime.now(timezone.utc).isoformat(),
             "indicators": [
                 {
